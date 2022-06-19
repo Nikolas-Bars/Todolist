@@ -8,7 +8,6 @@ import {AppRootStateType} from '../../app/store'
 import {SetAppErrorActionType, setAppStatusAC, SetAppStatusActionType} from '../../app/app-reducer'
 import {handleServerAppError, handleServerNetworkError} from '../../utils/error-utils'
 import {createSlice, PayloadAction} from "@reduxjs/toolkit";
-import {action} from "@storybook/addon-actions";
 
 const initialState: TasksStateType = {}
 

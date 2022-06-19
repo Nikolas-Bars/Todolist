@@ -13,6 +13,7 @@ const slice = createSlice({
     initialState: initialState,
     reducers:{
         setIsLoggedInAC(state: InitialStateType, action: PayloadAction<{ value: boolean }>) {// каждый case теперь будет мини редьюсером,
+            debugger
             state.isLoggedIn = action.payload.value // теперь не надо делать копию стейта, она создается автоматически ф-ей createSlice
 
         }
@@ -42,6 +43,7 @@ export const logoutTC = () => (dispatch: Dispatch<ActionsType | SetAppStatusActi
     dispatch(setAppStatusAC('loading'))
     authAPI.logout()
         .then(res => {
+            debugger
             if (res.data.resultCode === 0) {
                 dispatch(setIsLoggedInAC({value: false}))
                 dispatch(setAppStatusAC('succeeded'))
