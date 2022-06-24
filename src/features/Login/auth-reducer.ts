@@ -13,7 +13,6 @@ const slice = createSlice({
     initialState: initialState,
     reducers:{
         setIsLoggedInAC(state: InitialStateType, action: PayloadAction<{ value: boolean }>) {// каждый case теперь будет мини редьюсером,
-            debugger
             state.isLoggedIn = action.payload.value // теперь не надо делать копию стейта, она создается автоматически ф-ей createSlice
 
         }
@@ -21,16 +20,17 @@ const slice = createSlice({
 })
 
 export const authReducer = slice.reducer
+
 export const setIsLoggedInAC = slice.actions.setIsLoggedInAC
 
 // thunks
 export const loginTC = (data: LoginParamsType) => (dispatch: Dispatch<ActionsType | SetAppStatusActionType | SetAppErrorActionType>) => {
-    dispatch(setAppStatusAC('loading'))
+    dispatch(setAppStatusAC({status:'loading'}))
     authAPI.login(data)
         .then(res => {
             if (res.data.resultCode === 0) {
                 dispatch(setIsLoggedInAC({value: true}))
-                dispatch(setAppStatusAC('succeeded'))
+                dispatch(setAppStatusAC({status: 'succeeded'}))
             } else {
                 handleServerAppError(res.data, dispatch)
             }
@@ -40,13 +40,13 @@ export const loginTC = (data: LoginParamsType) => (dispatch: Dispatch<ActionsTyp
         })
 }
 export const logoutTC = () => (dispatch: Dispatch<ActionsType | SetAppStatusActionType | SetAppErrorActionType>) => {
-    dispatch(setAppStatusAC('loading'))
+    dispatch(setAppStatusAC({status: 'loading'}))
     authAPI.logout()
         .then(res => {
             debugger
             if (res.data.resultCode === 0) {
                 dispatch(setIsLoggedInAC({value: false}))
-                dispatch(setAppStatusAC('succeeded'))
+                dispatch(setAppStatusAC({status: 'succeeded'}))
             } else {
                 handleServerAppError(res.data, dispatch)
             }
