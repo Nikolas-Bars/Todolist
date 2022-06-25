@@ -9,6 +9,7 @@ import {TaskPriorities, TaskStatuses} from '../../api/todolists-api'
 import {appReducer} from '../../app/app-reducer'
 import thunkMiddleware from 'redux-thunk'
 import {authReducer} from "../../features/Login/auth-reducer";
+import {configureStore, getDefaultMiddleware} from "@reduxjs/toolkit";
 
 const rootReducer: RootReducerType = combineReducers({
     tasks: tasksReducer,
@@ -42,11 +43,15 @@ const initialGlobalState: AppRootStateType = {
         isInitialized: false
     },
     auth: {
-        isLoggedIn: false
+        isLoggedIn: true
     }
 };
 
-export const storyBookStore = createStore(rootReducer, initialGlobalState, applyMiddleware(thunkMiddleware));
+export const storyBookStore = configureStore({
+    reducer: rootReducer,
+    preloadedState: initialGlobalState,
+    middleware: getDefaultMiddleware=> getDefaultMiddleware().prepend(thunkMiddleware)
+})
 
 export const ReduxStoreProviderDecorator = (storyFn: any) => (
     <Provider
