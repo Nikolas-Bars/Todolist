@@ -23,12 +23,12 @@ export const loginTC_ = (data: LoginParamsType) => (dispatch: Dispatch<ActionsTy
 }
 //типизация createAsyncThunk - 1 параметр - то чем зарезолвится в случае успеха, 2 параметр - значения которые
 // приходят в санку, третьим параметром описываем возможную ошибку
-export const loginTC = createAsyncThunk<{isLoggedIn: boolean}, LoginParamsType, {rejectValue: {errors: Array<string>, fieldsErrors?:  Array<FieldErrorType> }}>('auth/loginTC', async (param, thunkAPI) => {
+export const loginTC = createAsyncThunk<undefined, LoginParamsType, { rejectValue: { errors: Array<string>, fieldsErrors?: Array<FieldErrorType> } }>('auth/loginTC', async (param, thunkAPI) => {
     const res = await authAPI.login(param)
     try {
         if (res.data.resultCode === 0) {
             thunkAPI.dispatch(setAppStatusAC({status: 'succeeded'}))
-            return {isLoggedIn: true} // просто переименовал value чтобы не запутаться
+            return  // просто переименовал value чтобы не запутаться
         } else {
             handleServerAppError(res.data, thunkAPI.dispatch)
             return thunkAPI.rejectWithValue({errors: res.data.messages, fieldsErrors: res.data.fieldsErrors}) //в случае неудачного запроса мы можем зареджектить thunkApi
@@ -41,32 +41,9 @@ export const loginTC = createAsyncThunk<{isLoggedIn: boolean}, LoginParamsType, 
         // @ts-ignore
         return thunkAPI.rejectWithValue({errors: err.message, fieldsError: undefined})
     }
-
 })
 
-const slice = createSlice({
-    name: 'auth',
-    initialState: {isLoggedIn: false},
-    reducers: {
-        setIsLoggedInAC(state: InitialStateType, action: PayloadAction<{ value: boolean }>) {// каждый case теперь будет мини редьюсером,
-            state.isLoggedIn = action.payload.value // мы оставляем этот AC так как будем вызывать его и в других местах.
-        }
-    },
-    extraReducers: builder => {
-        builder.addCase(loginTC.fulfilled, (state, action) =>{
-            debugger
-                state.isLoggedIn = action.payload.isLoggedIn
-        })
-    }
-})
-
-export const authReducer = slice.reducer
-
-export const setIsLoggedInAC = slice.actions.setIsLoggedInAC
-
-// thunks
-
-export const logoutTC = () => (dispatch: Dispatch<ActionsType | SetAppStatusActionType | SetAppErrorActionType>) => {
+export const logoutTC_ = () => (dispatch: Dispatch<ActionsType | SetAppStatusActionType | SetAppErrorActionType>) => {
     dispatch(setAppStatusAC({status: 'loading'}))
     authAPI.logout()
         .then(res => {
@@ -80,8 +57,55 @@ export const logoutTC = () => (dispatch: Dispatch<ActionsType | SetAppStatusActi
         })
         .catch((error) => {
             handleServerNetworkError(error, dispatch)
+
         })
 }
+
+export const logoutTC = createAsyncThunk('auth/logout', async (param, thunkAPI) => {
+    thunkAPI.dispatch(setAppStatusAC({status: 'loading'}))
+    try {
+        let res = await authAPI.logout()
+        if (res.data.resultCode === 0) {
+            thunkAPI.dispatch(setAppStatusAC({status: 'succeeded'}))
+            return
+        } else {
+            handleServerAppError(res.data, thunkAPI.dispatch)
+            return thunkAPI.rejectWithValue({})
+        }
+    } catch (error) {
+        // @ts-ignore
+        handleServerNetworkError(error, thunkAPI.dispatch)
+        return thunkAPI.rejectWithValue({})
+    }
+})
+
+
+const slice = createSlice({
+    name: 'auth',
+    initialState: {isLoggedIn: false},
+    reducers: {
+        setIsLoggedInAC(state: InitialStateType, action: PayloadAction<{ value: boolean }>) {// каждый case теперь будет мини редьюсером,
+            state.isLoggedIn = action.payload.value // мы оставляем этот AC так как будем вызывать его и в других местах.
+        }
+    },
+    extraReducers: builder => {
+        builder.addCase(loginTC.fulfilled, (state, action) => {
+            state.isLoggedIn = true
+        });
+
+        builder.addCase(logoutTC.fulfilled, (state, action) => {
+            state.isLoggedIn = false
+        })
+
+    }
+})
+
+export const authReducer = slice.reducer
+
+export const setIsLoggedInAC = slice.actions.setIsLoggedInAC
+
+// thunks
+
 
 // types
 
