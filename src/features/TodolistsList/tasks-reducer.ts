@@ -70,21 +70,36 @@ export const addTaskTC = (title: string, todolistId: string) => (dispatch: Dispa
 }
 
 
-export const removeTaskTC = createAsyncThunk('task/removeTaskTC',(param: {taskId: string, todolistId: string}, thunkAPI) => {
-    return todolistsAPI.deleteTask(param.todolistId, param.taskId)
+export const addTaskTC_ = createAsyncThunk('task/addTaskTC', (param: {title: string, todolistId: string}, thunkAPI) => {
+    thunkAPI.dispatch(setAppStatusAC({status: 'loading'}))
+    return todolistsAPI.createTask(param.todolistId, param.title)
         .then(res => {
-            return {taskId: param.taskId, todolistId: param.todolistId}
+            if (res.data.resultCode === 0) {
+                const task = res.data.data.item
+                const action = addTaskAC({task})
+                thunkAPI.dispatch(setAppStatusAC({status: 'succeeded'}))
+                return task
+
+            } else {
+                handleServerAppError(res.data, thunkAPI.dispatch);
+            }
+        })
+        .catch((error) => {
+            handleServerNetworkError(error, thunkAPI.dispatch)
         })
 })
 
-export const fetchTasksTC = createAsyncThunk('task/fetchTasks', (todolistId: string, thunkAPI)=>{
+export const removeTaskTC = createAsyncThunk('task/removeTaskTC',async (param: {taskId: string, todolistId: string}, thunkAPI) => {
+    const res = await todolistsAPI.deleteTask(param.todolistId, param.taskId)
+    return {taskId: param.taskId, todolistId: param.todolistId}
+})
+
+export const fetchTasksTC = createAsyncThunk('task/fetchTasks', async (todolistId: string, thunkAPI)=>{
     thunkAPI.dispatch(setAppStatusAC({status:'loading'}))
-    return todolistsAPI.getTasks(todolistId) // не забывай про return
-        .then((res) => {
-            const tasks = res.data.items
-            thunkAPI.dispatch(setAppStatusAC({status: 'succeeded'}))
-            return {tasks: tasks, todolistId: todolistId} //теперь когда промис зарезолвится он вернет нужный объект
-        })
+    const res = await todolistsAPI.getTasks(todolistId) // не забывай про return
+    const tasks = res.data.items
+    thunkAPI.dispatch(setAppStatusAC({status: 'succeeded'}))
+    return {tasks: tasks, todolistId: todolistId} //теперь когда промис зарезолвится он вернет нужный объект
 })
 
 const slice = createSlice({
@@ -122,7 +137,10 @@ const slice = createSlice({
             if (index > -1) {
                 state[action.payload.todolistId].splice(index, 1)
             }
-        })
+        });
+            // builder.addCase(addTaskTC.fulfilled, (state, action)=>{
+            //     state[action.payload.task.todoListId].unshift(action.payload.task)
+            // })
     }
 })
 
